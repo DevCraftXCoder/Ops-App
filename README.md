@@ -32,15 +32,6 @@ npm run dev                      # http://localhost:3000
 npm run deploy   # builds via opennextjs-cloudflare + wrangler deploy
 ```
 
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `ADMIN_PASSWORD` | HMAC-SHA-256 session token password |
-| `INTERNAL_OPS_SECRET` | Server-to-server auth for workflow engine |
-| `NEXT_PUBLIC_APP_URL` | App URL (default: `http://localhost:3000`) |
-| `PM2_STATS_URL` | Optional PM2 stats server URL (e.g. `http://127.0.0.1:9003`) |
-
 ## Design
 
 Dark theme (`#0a0a0a` background), purple accent (`#a855f7`), Syne headings, DM Sans body, JetBrains Mono code. Matches the Frxncois design system.

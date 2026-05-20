@@ -1,0 +1,492 @@
+/* cron-manager.module.css — CronManagerPanel styles */
+
+/* ── Panel shell ─────────────────────────────────────────────────────────────── */
+
+.panel {
+  background: #111111;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.title {
+  font-family: 'Syne', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin: 0;
+}
+
+/* ── Summary chips ───────────────────────────────────────────────────────────── */
+
+.chips {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.chip {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  background: #1e1e1e;
+  border: 1px solid #2a2a2a;
+  color: #aaa;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+  border-bottom: 1px solid #222;
+  margin-bottom: 16px;
+}
+
+.tab {
+  padding: 8px 16px;
+  cursor: pointer;
+  color: #888;
+  font-size: 13px;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: inherit;
+  transition: color 0.15s ease;
+}
+
+.tab:hover {
+  color: #ccc;
+}
+
+.tabActive {
+  color: #e0e0e0;
+  border-bottom-color: #e94560;
+}
+
+/* ── Job grid ────────────────────────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Job card ────────────────────────────────────────────────────────────────── */
+
+.card {
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cardHeader {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.jobName {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  color: #e0e0e0;
+  font-weight: 600;
+}
+
+.schedule {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #666;
+}
+
+.reason {
+  font-size: 11px;
+  color: #666;
+  font-style: italic;
+}
+
+/* ── Eligibility badge ───────────────────────────────────────────────────────── */
+
+.badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── Card actions ────────────────────────────────────────────────────────────── */
+
+.actions {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.btnMigrate {
+  background: #e94560;
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s ease;
+}
+
+.btnMigrate:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.btnMigrate:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnToggle {
+  background: transparent;
+  border: 1px solid #444;
+  color: #888;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btnToggle:hover {
+  border-color: #666;
+  color: #bbb;
+}
+
+.btnToggleOn {
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.btnDelete {
+  background: transparent;
+  border: 1px solid #dc2828;
+  color: #dc2828;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.btnDelete:hover {
+  opacity: 1;
+}
+
+/* ── Table ───────────────────────────────────────────────────────────────────── */
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.th {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #222;
+  color: #666;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+
+.td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #1a1a1a;
+  color: #ccc;
+  vertical-align: middle;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #888;
+}
+
+/* ── Add job form ────────────────────────────────────────────────────────────── */
+
+.addForm {
+  margin-top: 16px;
+  padding: 12px;
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.addFormTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #aaa;
+  font-family: 'JetBrains Mono', monospace;
+  margin: 0;
+}
+
+.addFormRow {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.input {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #e0e0e0;
+  font-family: 'JetBrains Mono', monospace;
+  flex: 1;
+  min-width: 120px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #e94560;
+}
+
+.select {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 12px;
+  color: #e0e0e0;
+  font-family: 'JetBrains Mono', monospace;
+  cursor: pointer;
+}
+
+.select:focus {
+  outline: none;
+  border-color: #e94560;
+}
+
+.btnAdd {
+  background: #1e1e1e;
+  border: 1px solid #444;
+  color: #e0e0e0;
+  padding: 5px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.btnAdd:hover:not(:disabled) {
+  border-color: #e94560;
+}
+
+.btnAdd:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btnAddOpen {
+  background: transparent;
+  border: 1px dashed #444;
+  color: #888;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 8px;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.btnAddOpen:hover {
+  border-color: #666;
+  color: #ccc;
+}
+
+/* ── Error / loading states ──────────────────────────────────────────────────── */
+
+.errorBanner {
+  background: rgba(220, 40, 40, 0.1);
+  border: 1px solid rgba(220, 40, 40, 0.3);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cardError {
+  font-size: 11px;
+  color: #f87171;
+  font-style: italic;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #1a1a1a 25%, #222 50%, #1a1a1a 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px;
+  height: 14px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeletonCard {
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Migration log ───────────────────────────────────────────────────────────── */
+
+.logList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logItem {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  background: #181818;
+  border: 1px solid #2a2a2a;
+  border-radius: 4px;
+  flex-wrap: wrap;
+}
+
+.logName {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #e0e0e0;
+  font-weight: 600;
+  flex: 1;
+}
+
+.logFrom {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #666;
+}
+
+.logDate {
+  font-size: 11px;
+  color: #555;
+  white-space: nowrap;
+}
+
+/* ── Spinner ─────────────────────────────────────────────────────────────────── */
+
+.spinner {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── PM2 status indicators ────────────────────────────────────────────────────── */
+
+.pm2Status {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.statusOnline {
+  color: #22c55e;
+}
+
+.statusStopped {
+  color: #dc2828;
+}
+
+.pm2Detail {
+  font-size: 10px;
+  color: #666;
+  font-family: "JetBrains Mono", monospace;
+  margin-bottom: 4px;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────────────── */
+
+.empty {
+  text-align: center;
+  color: #555;
+  font-size: 13px;
+  padding: 32px 0;
+}

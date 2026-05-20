@@ -1,0 +1,29 @@
+{
+  "name": "ops-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frxncois Ops App - Workflow automation, monitoring, alerting & ticketing dashboard",
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "deploy": "npx @opennextjs/cloudflare@1.5.11 build && npx wrangler deploy"
+  },
+  "dependencies": {
+    "@opennextjs/cloudflare": "^1.5.11",
+    "@xyflow/react": "^12.10.1",
+    "next": "^15.5.18",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250521.0",
+    "@types/node": "^25.3.5",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "^6.0.2",
+    "wrangler": "^4.20.0"
+  }
+}

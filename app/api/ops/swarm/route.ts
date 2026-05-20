@@ -4,7 +4,6 @@ import * as blob from "@/lib/cf-blob";
 import { verifyToken } from "@/lib/auth-token";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-export const runtime = "edge";
 
 const DEFS_KEY = "ops/swarm-defs.json";
 const RUNS_KEY = "ops/swarm-runs.json";

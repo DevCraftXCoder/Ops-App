@@ -9,7 +9,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "lint": "next lint",
-    "deploy": "npx @opennextjs/cloudflare@1.5.11 build && npx wrangler deploy"
+    "deploy": "npx @opennextjs/cloudflare build && npx wrangler deploy"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.5.11",

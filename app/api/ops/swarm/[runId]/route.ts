@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import * as blob from "@/lib/cf-blob";
 import { verifyToken } from "@/lib/auth-token";
 
-export const runtime = "edge";
 
 const RUNS_KEY = "ops/swarm-runs.json";
 

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as blob from "@/lib/cf-blob";
 
-export const runtime = "edge";
 
 const CRON_JOBS_KEY = "ops/cron-jobs.json";
 

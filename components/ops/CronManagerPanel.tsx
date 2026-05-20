@@ -12,6 +12,8 @@ interface ClassifiedJob {
   eligibility: "CF_READY" | "CF_WEBHOOK" | "PM2_ONLY" | "RESTART_ONLY" | "ALREADY_MIGRATED";
   reason: string;
   gamemodeSuspend: boolean;
+  // Enriched by the cron-manager GET: live process data attached server-side
+  _proc?: Pm2Process;
 }
 
 interface CronJobRow {
@@ -33,6 +35,12 @@ interface FetchData {
   cfError?: string;
 }
 
+interface ModeState {
+  mode: string;
+  changedAt: number;
+  suspended_crons: string[];
+}
+
 type ActiveTab = "pm2" | "cf" | "log";
 
 // ── Badge config ──────────────────────────────────────────────────────────────
@@ -41,11 +49,11 @@ const BADGE_STYLES: Record<
   ClassifiedJob["eligibility"],
   { background: string; color: string; label: string }
 > = {
-  CF_READY:         { background: "rgba(34,197,94,0.15)",  color: "#22c55e",  label: "CF_READY" },
-  CF_WEBHOOK:       { background: "rgba(245,158,11,0.15)", color: "#f59e0b",  label: "CF_WEBHOOK" },
-  PM2_ONLY:         { background: "rgba(220,40,40,0.10)",  color: "#dc404099", label: "PM2_ONLY" },
-  RESTART_ONLY:     { background: "rgba(100,100,100,0.15)", color: "#888",    label: "RESTART_ONLY" },
-  ALREADY_MIGRATED: { background: "rgba(59,130,246,0.15)", color: "#3b82f6",  label: "MIGRATED" },
+  CF_READY:         { background: "rgba(34,197,94,0.15)",   color: "#22c55e",  label: "CF_READY" },
+  CF_WEBHOOK:       { background: "rgba(245,158,11,0.15)",  color: "#f59e0b",  label: "CF_WEBHOOK" },
+  PM2_ONLY:         { background: "rgba(220,40,40,0.10)",   color: "#dc404099", label: "PM2_ONLY" },
+  RESTART_ONLY:     { background: "rgba(100,100,100,0.15)", color: "#888",     label: "RESTART_ONLY" },
+  ALREADY_MIGRATED: { background: "rgba(59,130,246,0.15)",  color: "#3b82f6",  label: "MIGRATED" },
 };
 
 // ── Add-job form state ────────────────────────────────────────────────────────
@@ -71,22 +79,30 @@ interface CronManagerPanelProps {
 }
 
 export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
-  const [activeTab, setActiveTab] = useState<ActiveTab>("pm2");
-  const [pm2Jobs, setPm2Jobs]     = useState<ClassifiedJob[]>([]);
-  const [cfJobs, setCfJobs]       = useState<CronJobRow[]>([]);
-  const [loading, setLoading]     = useState(true);
-  const [error, setError]         = useState<string | null>(null);
-  const [migrating, setMigrating] = useState<Set<string>>(new Set());
-  const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab]     = useState<ActiveTab>("pm2");
+  const [pm2Jobs, setPm2Jobs]         = useState<ClassifiedJob[]>([]);
+  const [cfJobs, setCfJobs]           = useState<CronJobRow[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [error, setError]             = useState<string | null>(null);
+  const [migrating, setMigrating]     = useState<Set<string>>(new Set());
+  const [cardErrors, setCardErrors]   = useState<Record<string, string>>({});
+
+  // PM2 process control state: name → in-flight action
+  const [controlBusy, setControlBusy] = useState<Record<string, string>>({});
+  const [controlErrors, setControlErrors] = useState<Record<string, string>>({});
+
+  // Mode-state / suspended_crons
+  const [suspendedCrons, setSuspendedCrons] = useState<string[]>([]);
+  const [gamemodeLoading, setGamemodeLoading] = useState<Set<string>>(new Set());
 
   // Add-job form
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [addForm, setAddForm]         = useState<AddFormState>(EMPTY_FORM);
-  const [addSubmitting, setAddSubmitting] = useState(false);
-  const [addError, setAddError]           = useState<string | null>(null);
+  const [showAddForm, setShowAddForm]       = useState(false);
+  const [addForm, setAddForm]               = useState<AddFormState>(EMPTY_FORM);
+  const [addSubmitting, setAddSubmitting]   = useState(false);
+  const [addError, setAddError]             = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // ── Fetch ────────────────────────────────────────────────────────────────────
+  // ── Fetch cron data ──────────────────────────────────────────────────────────
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -107,7 +123,52 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
     }
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  // ── Fetch mode-state (suspended_crons) ───────────────────────────────────────
+
+  const fetchModeState = useCallback(async () => {
+    try {
+      const res = await fetch("/api/ops/mode-state", { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json() as ModeState;
+      setSuspendedCrons(data.suspended_crons ?? []);
+    } catch {
+      // non-critical — silently swallow
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    fetchModeState();
+  }, [fetchData, fetchModeState]);
+
+  // ── PM2 process control ───────────────────────────────────────────────────────
+
+  const handlePm2Control = useCallback(async (
+    jobName: string,
+    action: "start" | "stop" | "restart",
+  ) => {
+    setControlBusy((prev) => ({ ...prev, [jobName]: action }));
+    setControlErrors((prev) => { const next = { ...prev }; delete next[jobName]; return next; });
+
+    try {
+      const res = await fetch("/api/ops/pm2-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, name: jobName }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null) as { error?: string } | null;
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+      // Refresh data after control action
+      await fetchData();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Control action failed";
+      setControlErrors((prev) => ({ ...prev, [jobName]: msg }));
+    } finally {
+      setControlBusy((prev) => { const next = { ...prev }; delete next[jobName]; return next; });
+    }
+  }, [fetchData]);
 
   // ── Migrate job ───────────────────────────────────────────────────────────────
 
@@ -148,21 +209,51 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
   }, [fetchData]);
 
   // ── Gamemode toggle ───────────────────────────────────────────────────────────
+  // Always writes to suspended_crons[] via /api/ops/mode-state.
+  // For CF_READY/CF_WEBHOOK jobs that have a CF registry row, also patches
+  // the CF registry gamemode_suspend flag (existing behaviour).
 
-  const handleGamemodeToggle = useCallback(async (cfJob: CronJobRow) => {
-    const newVal = cfJob.gamemode_suspend ? 0 : 1;
+  const handleGamemodeToggle = useCallback(async (job: ClassifiedJob, cfJob?: CronJobRow) => {
+    const jobName = job.name;
+    setGamemodeLoading((prev) => new Set([...prev, jobName]));
+
+    const isSuspended = suspendedCrons.includes(jobName);
+    const patchBody = isSuspended ? { remove: jobName } : { add: jobName };
+
     try {
-      const res = await fetch("/api/ops/cron-manager", {
+      // Always patch mode-state file
+      const modeRes = await fetch("/api/ops/mode-state", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: cfJob.id, gamemode_suspend: newVal }),
+        body: JSON.stringify(patchBody),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      await fetchData();
+      if (modeRes.ok) {
+        const modeData = await modeRes.json() as { suspended_crons?: string[] };
+        setSuspendedCrons(modeData.suspended_crons ?? []);
+      }
+
+      // Also patch CF registry row if one exists (CF_READY or CF_WEBHOOK)
+      if (cfJob && (job.eligibility === "CF_READY" || job.eligibility === "CF_WEBHOOK")) {
+        const newVal = cfJob.gamemode_suspend ? 0 : 1;
+        await fetch("/api/ops/cron-manager", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: cfJob.id, gamemode_suspend: newVal }),
+        }).catch(() => {
+          // non-critical if CF registry patch fails — mode-state is the authority
+        });
+        await fetchData();
+      }
     } catch {
       // non-critical — silently ignore
+    } finally {
+      setGamemodeLoading((prev) => {
+        const next = new Set(prev);
+        next.delete(jobName);
+        return next;
+      });
     }
-  }, [fetchData]);
+  }, [suspendedCrons, fetchData]);
 
   // ── CF registry: toggle enabled ────────────────────────────────────────────
 
@@ -243,15 +334,20 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
 
   // ── Derived counts ─────────────────────────────────────────────────────────
 
-  const cfCount        = pm2Jobs.filter((j) => j.eligibility === "CF_READY" || j.eligibility === "CF_WEBHOOK").length;
-  const webhookCount   = pm2Jobs.filter((j) => j.eligibility === "CF_WEBHOOK").length;
-  const pm2OnlyCount   = pm2Jobs.filter((j) => j.eligibility === "PM2_ONLY" || j.eligibility === "RESTART_ONLY").length;
-  const migratedCount  = pm2Jobs.filter((j) => j.eligibility === "ALREADY_MIGRATED").length;
+  const cfCount       = pm2Jobs.filter((j) => j.eligibility === "CF_READY" || j.eligibility === "CF_WEBHOOK").length;
+  const webhookCount  = pm2Jobs.filter((j) => j.eligibility === "CF_WEBHOOK").length;
+  const pm2OnlyCount  = pm2Jobs.filter((j) => j.eligibility === "PM2_ONLY" || j.eligibility === "RESTART_ONLY").length;
+  const migratedCount = pm2Jobs.filter((j) => j.eligibility === "ALREADY_MIGRATED").length;
 
   // ── Render helpers ─────────────────────────────────────────────────────────
 
   const findCfJob = (name: string): CronJobRow | undefined =>
     cfJobs.find((c) => c.name === name);
+
+  // Resolve live process data: prefer _proc from server-enriched data, fall
+  // back to the pm2Processes prop (polled by parent via usePm2Stats).
+  const resolvePm2Proc = (job: ClassifiedJob): Pm2Process | undefined =>
+    job._proc ?? pm2Processes?.find((p) => p.name === job.name);
 
   // ── Skeleton ───────────────────────────────────────────────────────────────
 
@@ -323,25 +419,34 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
             </p>
           )}
           {pm2Jobs.map((job) => {
-            const badge      = BADGE_STYLES[job.eligibility];
-            const isMigrating = migrating.has(job.name);
-            const cfJob       = findCfJob(job.name);
-            const canMigrate  = job.eligibility === "CF_READY" || job.eligibility === "CF_WEBHOOK";
+            const badge         = BADGE_STYLES[job.eligibility];
+            const isMigrating   = migrating.has(job.name);
+            const cfJob         = findCfJob(job.name);
+            const canMigrate    = job.eligibility === "CF_READY" || job.eligibility === "CF_WEBHOOK";
             const showMigrateBtn = canMigrate;
-            const showGamemode =
-              cfJob && (job.eligibility === "CF_READY" || job.eligibility === "CF_WEBHOOK");
-            const pm2Proc = pm2Processes?.find((p) => p.name === job.name);
+            // Feature B: gamemode toggle visible for ALL non-ALREADY_MIGRATED jobs
+            const showGamemode  = job.eligibility !== "ALREADY_MIGRATED";
+            const pm2Proc       = resolvePm2Proc(job);
+            const isOnline      = pm2Proc?.status === "online";
+            const procExists    = !!pm2Proc;
+            const busyAction    = controlBusy[job.name];
+            const isBusy        = !!busyAction;
+            const isSuspended   = suspendedCrons.includes(job.name);
+            const gamemodeInFlight = gamemodeLoading.has(job.name);
 
             const migrateLabel = job.eligibility === "CF_WEBHOOK"
               ? "Setup Webhook Relay"
               : "Migrate to CF";
+
+            // RESTART_ONLY jobs show only the restart button
+            const isRestartOnly = job.eligibility === "RESTART_ONLY";
 
             return (
               <div key={job.name} className={styles.card}>
                 <div className={styles.cardHeader}>
                   <span className={styles.jobName}>{job.name}</span>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    {pm2Proc && pm2Proc.status === "online" && (
+                    {pm2Proc && isOnline && (
                       <span
                         className={`${styles.pm2Status} ${styles.statusOnline}`}
                         title="Process is online"
@@ -349,7 +454,7 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
                         {"●"}
                       </span>
                     )}
-                    {pm2Proc && pm2Proc.status !== "online" && (
+                    {pm2Proc && !isOnline && (
                       <span
                         className={`${styles.pm2Status} ${styles.statusStopped}`}
                         title="Process is stopped"
@@ -378,11 +483,18 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
 
                 <span className={styles.reason}>{job.reason}</span>
 
+                {/* PM2 control error */}
+                {controlErrors[job.name] && (
+                  <span className={styles.cardError}>{controlErrors[job.name]}</span>
+                )}
+
+                {/* Migration error */}
                 {cardErrors[job.name] && (
                   <span className={styles.cardError}>{cardErrors[job.name]}</span>
                 )}
 
                 <div className={styles.actions}>
+                  {/* Migrate button (CF_READY / CF_WEBHOOK only) */}
                   {showMigrateBtn && (
                     <button
                       className={styles.btnMigrate}
@@ -401,13 +513,74 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
                     </button>
                   )}
 
-                  {showGamemode && cfJob && (
+                  {/* PM2 process control buttons */}
+                  {job.eligibility !== "ALREADY_MIGRATED" && (
+                    <>
+                      {/* Start: hidden for RESTART_ONLY; disabled when online */}
+                      {!isRestartOnly && (
+                        <button
+                          className={styles.btnToggle}
+                          disabled={isBusy || isOnline || !procExists}
+                          title={isOnline ? "Process is already running" : "Start process"}
+                          onClick={() => handlePm2Control(job.name, "start")}
+                          style={{
+                            fontSize: 11,
+                            padding: "3px 8px",
+                            opacity: (isBusy || isOnline || !procExists) ? 0.4 : 1,
+                          }}
+                        >
+                          {busyAction === "start" ? <span className={styles.spinner} /> : null}
+                          ▶ Start
+                        </button>
+                      )}
+
+                      {/* Stop: hidden for RESTART_ONLY; disabled when not online */}
+                      {!isRestartOnly && (
+                        <button
+                          className={styles.btnToggle}
+                          disabled={isBusy || !isOnline}
+                          title={!isOnline ? "Process is not running" : "Stop process"}
+                          onClick={() => handlePm2Control(job.name, "stop")}
+                          style={{
+                            fontSize: 11,
+                            padding: "3px 8px",
+                            opacity: (isBusy || !isOnline) ? 0.4 : 1,
+                          }}
+                        >
+                          {busyAction === "stop" ? <span className={styles.spinner} /> : null}
+                          ■ Stop
+                        </button>
+                      )}
+
+                      {/* Restart: always enabled when proc exists */}
+                      <button
+                        className={styles.btnToggle}
+                        disabled={isBusy || !procExists}
+                        title="Restart process"
+                        onClick={() => handlePm2Control(job.name, "restart")}
+                        style={{
+                          fontSize: 11,
+                          padding: "3px 8px",
+                          opacity: (isBusy || !procExists) ? 0.4 : 1,
+                        }}
+                      >
+                        {busyAction === "restart" ? <span className={styles.spinner} /> : null}
+                        ↺ Restart
+                      </button>
+                    </>
+                  )}
+
+                  {/* Gamemode toggle — all non-ALREADY_MIGRATED jobs */}
+                  {showGamemode && (
                     <button
-                      className={`${styles.btnToggle} ${cfJob.gamemode_suspend ? styles.btnToggleOn : ""}`}
-                      onClick={() => handleGamemodeToggle(cfJob)}
+                      className={`${styles.btnToggle} ${isSuspended ? styles.btnToggleOn : ""}`}
+                      disabled={gamemodeInFlight}
+                      onClick={() => handleGamemodeToggle(job, cfJob)}
                       title="Toggle gamemode suspend — when ON, job is paused during gaming sessions"
+                      style={{ opacity: gamemodeInFlight ? 0.5 : 1 }}
                     >
-                      {cfJob.gamemode_suspend ? "Gaming: ON" : "Gaming: OFF"}
+                      {gamemodeInFlight && <span className={styles.spinner} />}
+                      {isSuspended ? "Gaming: ON" : "Gaming: OFF"}
                     </button>
                   )}
                 </div>

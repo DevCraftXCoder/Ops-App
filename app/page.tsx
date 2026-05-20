@@ -5,12 +5,13 @@ import { ServerMetricsPanel } from "@/components/ops/ServerMetricsPanel";
 import { AlertsPanel } from "@/components/ops/AlertsPanel";
 import { TicketsPanel } from "@/components/ops/TicketsPanel";
 import { CronManagerPanel } from "@/components/ops/CronManagerPanel";
+import { SwarmPanel } from "@/components/ops/SwarmPanel";
 import { WorkflowCanvas } from "@/components/ops/WorkflowCanvas";
 import { usePm2Stats } from "@/hooks/usePm2Stats";
 import { useMobile } from "@/hooks/useMobile";
 import type { Node, Edge } from "@xyflow/react";
 
-type MainTab = "dashboard" | "workflows" | "cron";
+type MainTab = "dashboard" | "workflows" | "cron" | "swarm";
 
 interface WorkflowData {
   id: string;
@@ -118,6 +119,7 @@ export default function OpsPage() {
                 { key: "dashboard", label: "Dashboard" },
                 { key: "workflows", label: "Workflows" },
                 { key: "cron", label: "Cron" },
+                { key: "swarm", label: "Swarm" },
               ] as const
             ).map((tab) => (
               <button
@@ -432,6 +434,13 @@ export default function OpsPage() {
         {activeTab === "cron" && (
           <div style={{ padding: 20, maxWidth: 1200, margin: "0 auto", overflowY: "auto", height: "100%" }}>
             <CronManagerPanel pm2Processes={pm2Stats?.processes} />
+          </div>
+        )}
+
+        {/* Swarm tab */}
+        {activeTab === "swarm" && (
+          <div style={{ height: "100%", overflow: "hidden" }}>
+            <SwarmPanel />
           </div>
         )}
       </main>

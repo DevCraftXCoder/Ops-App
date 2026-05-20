@@ -64,7 +64,8 @@ export async function put(
     await (bucket as unknown as { put(k: string, v: typeof content, o: Record<string, unknown>): Promise<R2Object> })
       .put(key, content, { httpMetadata: { contentType: _opts.contentType } });
   } else {
-    await bucket.put(key, content);
+    await (bucket as unknown as { put(k: string, v: typeof content): Promise<R2Object> })
+      .put(key, content);
   }
   return { url: key, pathname: key };
 }

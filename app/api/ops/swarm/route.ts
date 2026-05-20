@@ -101,7 +101,7 @@ async function saveRuns(runs: SwarmRun[]): Promise<void> {
 // ── Swarm execution (runs async via ctx.waitUntil) ────────────────────────────
 
 async function executeSwarm(run: SwarmRun, def: SwarmDef): Promise<void> {
-  const anthropicKey = process.env.ANTHROPIC_API_KEY;
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
 
   // Update status to running
   const runs = await loadRuns();
@@ -113,14 +113,14 @@ async function executeSwarm(run: SwarmRun, def: SwarmDef): Promise<void> {
   runs[idx].logs.push(`[${new Date().toISOString()}] Agents: ${def.agents.join(", ")}`);
   await saveRuns(runs);
 
-  if (!anthropicKey) {
+  if (!openrouterKey) {
     const failRuns = await loadRuns();
     const fi = failRuns.findIndex((r) => r.id === run.id);
     if (fi !== -1) {
       failRuns[fi].status = "failed";
-      failRuns[fi].error = "ANTHROPIC_API_KEY not configured";
+      failRuns[fi].error = "OPENROUTER_API_KEY not configured";
       failRuns[fi].endedAt = Date.now();
-      failRuns[fi].logs.push(`[${new Date().toISOString()}] ERROR: ANTHROPIC_API_KEY not set`);
+      failRuns[fi].logs.push(`[${new Date().toISOString()}] ERROR: OPENROUTER_API_KEY not set`);
       await saveRuns(failRuns);
     }
     return;
@@ -128,8 +128,8 @@ async function executeSwarm(run: SwarmRun, def: SwarmDef): Promise<void> {
 
   const modelId =
     def.model === "opus"
-      ? "claude-opus-4-7"
-      : "claude-sonnet-4-6";
+      ? "anthropic/claude-opus-4-7"
+      : "anthropic/claude-sonnet-4-6";
 
   try {
     if (def.parallelism === "sequential") {
@@ -144,12 +144,13 @@ async function executeSwarm(run: SwarmRun, def: SwarmDef): Promise<void> {
           ? `You are the ${agentName} agent. Prior agent output:\n${context}\n\nYour task: ${def.task}`
           : `You are the ${agentName} agent. Your task: ${def.task}`;
 
-        const res = await fetch("https://api.anthropic.com/v1/messages", {
+        const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers: {
-            "x-api-key": anthropicKey,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
+            "Authorization": `Bearer ${openrouterKey}`,
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://ops-app.frxncois.workers.dev",
+            "X-Title": "Frxncois Ops Swarm",
           },
           body: JSON.stringify({
             model: modelId,
@@ -170,8 +171,8 @@ async function executeSwarm(run: SwarmRun, def: SwarmDef): Promise<void> {
           continue;
         }
 
-        const data = await res.json() as { content: Array<{ type: string; text: string }> };
-        const text = data.content?.find((b) => b.type === "text")?.text ?? "";
+        const data = await res.json() as { choices: Array<{ message: { content: string } }> };
+        const text = data.choices?.[0]?.message?.content ?? "";
         context = text;
 
         currentRuns[ci].logs.push(
@@ -186,12 +187,13 @@ async function executeSwarm(run: SwarmRun, def: SwarmDef): Promise<void> {
       const results = await Promise.allSettled(
         def.agents.map(async (agentName) => {
           const prompt = `You are the ${agentName} agent. Your task: ${def.task}`;
-          const res = await fetch("https://api.anthropic.com/v1/messages", {
+          const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
-              "x-api-key": anthropicKey,
-              "anthropic-version": "2023-06-01",
-              "content-type": "application/json",
+              "Authorization": `Bearer ${openrouterKey}`,
+              "Content-Type": "application/json",
+              "HTTP-Referer": "https://ops-app.frxncois.workers.dev",
+              "X-Title": "Frxncois Ops Swarm",
             },
             body: JSON.stringify({
               model: modelId,
@@ -200,8 +202,8 @@ async function executeSwarm(run: SwarmRun, def: SwarmDef): Promise<void> {
             }),
           });
           if (!res.ok) return { agentName, text: `HTTP ${res.status}`, ok: false };
-          const data = await res.json() as { content: Array<{ type: string; text: string }> };
-          const text = data.content?.find((b) => b.type === "text")?.text ?? "";
+          const data = await res.json() as { choices: Array<{ message: { content: string } }> };
+          const text = data.choices?.[0]?.message?.content ?? "";
           return { agentName, text, ok: true };
         })
       );

@@ -27,11 +27,13 @@ function BaseNode({
   hasTarget?: boolean;
   hasSource?: boolean;
 }) {
+  const healthColor = label.toLowerCase().includes("ticket") ? RED : label.toLowerCase().includes("watch") ? AMBER : GREEN;
   return (
     <div
+      className={`workflow-node-shell ${label.toLowerCase().includes("ticket") ? "workflow-node-error" : ""}`}
       style={{
-        background: "#1a1a1a",
-        border: "1px solid #333",
+        background: "linear-gradient(135deg, rgba(32,32,34,0.92), rgba(18,18,20,0.86))",
+        border: "1px solid rgba(255,255,255,0.13)",
         borderLeft: `3px solid ${accent}`,
         borderRadius: 6,
         padding: "8px 10px",
@@ -39,9 +41,24 @@ function BaseNode({
         maxWidth: 220,
         fontSize: 11,
         color: "#ccc",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+        boxShadow: "0 16px 34px rgba(0,0,0,0.44), inset 0 1px 0 rgba(255,255,255,0.04)",
+        position: "relative",
+        backdropFilter: "blur(10px)",
       }}
     >
+      <span
+        title="Node health"
+        style={{
+          position: "absolute",
+          top: 7,
+          right: 8,
+          width: 7,
+          height: 7,
+          borderRadius: "50%",
+          background: healthColor,
+          boxShadow: `0 0 12px ${healthColor}`,
+        }}
+      />
       {hasTarget && (
         <Handle
           type="target"
@@ -230,12 +247,21 @@ function CreateTicketNode({ data }: NodeProps) {
 function SplitNode({ data }: NodeProps) {
   const d = data as { label?: string };
   return (
-    <div style={{ background: "#1a1a1a", border: "1px solid #333", borderLeft: `3px solid ${ORANGE}`, borderRadius: 6, padding: "8px 10px", minWidth: 160, fontSize: 11, color: "#ccc", position: "relative" }}>
+    <div className="workflow-node-shell" style={{ background: "linear-gradient(135deg, rgba(45,30,18,0.92), rgba(20,18,16,0.88))", border: "1px solid rgba(249,115,22,0.34)", borderLeft: `3px solid ${ORANGE}`, borderRadius: 6, padding: "8px 10px", minWidth: 176, fontSize: 11, color: "#ccc", position: "relative", boxShadow: "0 16px 34px rgba(0,0,0,0.44), 0 0 24px rgba(249,115,22,0.12)" }}>
       <Handle type="target" position={Position.Top} style={{ background: "#555", border: "1px solid #777", width: 8, height: 8 }} />
       <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: ORANGE, marginBottom: 4 }}>Split</div>
       <div style={{ fontSize: 10, color: "#888" }}>{d.label ?? "Branch A / B"}</div>
       <Handle id="a" type="source" position={Position.Bottom} style={{ left: "30%", background: "#555", border: "1px solid #777", width: 8, height: 8 }} />
       <Handle id="b" type="source" position={Position.Bottom} style={{ left: "70%", background: "#555", border: "1px solid #777", width: 8, height: 8 }} />
+    </div>
+  );
+}
+
+function GroupContainerNode({ data }: NodeProps) {
+  const d = data as { label?: string };
+  return (
+    <div className="workflow-group-container">
+      <span>{d.label ?? "Group"}</span>
     </div>
   );
 }
@@ -289,6 +315,7 @@ export const NODE_TYPES = {
   maxLogSize: MaxLogSizeNode,
   maxMemory: MaxMemoryNode,
   maxCpu: MaxCpuNode,
+  groupContainer: GroupContainerNode,
 } as const;
 
 export const NODE_PALETTE = [

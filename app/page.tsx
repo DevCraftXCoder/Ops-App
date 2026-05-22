@@ -10,8 +10,12 @@ import { WorkflowCanvas } from "@/components/ops/WorkflowCanvas";
 import { usePm2Stats } from "@/hooks/usePm2Stats";
 import { useMobile } from "@/hooks/useMobile";
 import type { Node, Edge } from "@xyflow/react";
+import styles from "./page.module.css";
 
 type MainTab = "dashboard" | "workflows" | "cron" | "swarm";
+type DockTab = "run" | "alerts" | "tickets" | "cron";
+type DockSide = "bottom" | "right";
+type Density = "compact" | "comfortable";
 
 interface WorkflowData {
   id: string;
@@ -34,6 +38,14 @@ export default function OpsPage() {
   const [activeWorkflowId, setActiveWorkflowId] = useState<string | null>(null);
   const [canvasDirty, setCanvasDirty] = useState(false);
   const saveFnRef = useRef<(() => void) | null>(null);
+  const [workflowSidebarCollapsed, setWorkflowSidebarCollapsed] = useState(false);
+  const [dockTab, setDockTab] = useState<DockTab>("cron");
+  const [dockSide, setDockSide] = useState<DockSide>("bottom");
+  const [bottomPanelHeight, setBottomPanelHeight] = useState(330);
+  const [activityOpen, setActivityOpen] = useState(true);
+  const [density, setDensity] = useState<Density>("comfortable");
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [commandQuery, setCommandQuery] = useState("");
 
   useEffect(() => {
     fetch("/api/ops/workflows")
@@ -46,6 +58,19 @@ export default function OpsPage() {
   }, []);
 
   const activeWorkflow = workflows.find((w) => w.id === activeWorkflowId) ?? null;
+
+  const activityItems = React.useMemo(() => {
+    const onlineCount = pm2Stats?.processes.filter((process) => process.status === "online").length ?? 0;
+    const totalCount = pm2Stats?.processes.length ?? 0;
+    return [
+      canvasDirty ? "Workflow has unsaved edits" : "Workflow state is saved",
+      activeWorkflow ? `Editing ${activeWorkflow.name}` : "No workflow selected",
+      `${workflows.length} workflow${workflows.length === 1 ? "" : "s"} available`,
+      `${onlineCount}/${totalCount} PM2 processes online`,
+      alertCount > 0 ? `${alertCount} active alert${alertCount === 1 ? "" : "s"}` : "No active alert count",
+      ticketCount > 0 ? `${ticketCount} ticket${ticketCount === 1 ? "" : "s"} tracked` : "No open ticket count",
+    ];
+  }, [activeWorkflow, alertCount, canvasDirty, pm2Stats, ticketCount, workflows.length]);
 
   const handleSaveWorkflow = useCallback(
     async (nodes: Node[], edges: Edge[]) => {
@@ -81,6 +106,65 @@ export default function OpsPage() {
     }
   }, []);
 
+  const startBottomResize = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const startY = event.clientY;
+    const startHeight = bottomPanelHeight;
+
+    const onMove = (moveEvent: MouseEvent) => {
+      const delta = startY - moveEvent.clientY;
+      setBottomPanelHeight(Math.max(220, Math.min(520, startHeight + delta)));
+    };
+
+    const onUp = () => {
+      document.body.classList.remove(styles.resizingDock);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    document.body.classList.add(styles.resizingDock);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }, [bottomPanelHeight]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setCommandPaletteOpen((open) => !open);
+      }
+      if (event.key === "Escape") {
+        setCommandPaletteOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const commands = React.useMemo(
+    () => [
+      { label: "Save workflow", hint: "Persist current canvas", action: () => saveFnRef.current?.() },
+      { label: "New workflow", hint: "Create a blank workflow", action: handleCreateWorkflow },
+      { label: "Toggle workflow sidebar", hint: "Collapse or expand the left rail", action: () => setWorkflowSidebarCollapsed((value) => !value) },
+      { label: "Toggle activity sidebar", hint: "Show or hide recent activity", action: () => setActivityOpen((value) => !value) },
+      { label: "Dock panels bottom", hint: "Canvas over draggable panels", action: () => setDockSide("bottom") },
+      { label: "Dock panels right", hint: "Canvas beside panels", action: () => setDockSide("right") },
+      { label: density === "compact" ? "Use comfortable density" : "Use compact density", hint: "Adjust list and panel spacing", action: () => setDensity((value) => (value === "compact" ? "comfortable" : "compact")) },
+      { label: "Open cron dock", hint: "Show Cron Manager in lower dock", action: () => { setActiveTab("workflows"); setDockTab("cron"); } },
+    ],
+    [density, handleCreateWorkflow]
+  );
+
+  const filteredCommands = commands.filter((command) =>
+    `${command.label} ${command.hint}`.toLowerCase().includes(commandQuery.toLowerCase())
+  );
+
+  const runCommand = (action: () => void | Promise<void>) => {
+    void action();
+    setCommandPaletteOpen(false);
+    setCommandQuery("");
+  };
+
   const handleDeleteWorkflow = useCallback(
     async (id: string) => {
       if (!confirm("Delete this workflow?")) return;
@@ -93,8 +177,44 @@ export default function OpsPage() {
     [activeWorkflowId, workflows]
   );
 
+  const renderDockContent = () => {
+    if (dockTab === "alerts") {
+      return (
+        <AlertsPanel
+          metrics={metrics}
+          onTicketCreated={() => setTicketRefreshKey((k) => k + 1)}
+          onAlertCountChange={setAlertCount}
+        />
+      );
+    }
+
+    if (dockTab === "tickets") {
+      return (
+        <TicketsPanel
+          refreshKey={ticketRefreshKey}
+          onTicketCountChange={setTicketCount}
+        />
+      );
+    }
+
+    if (dockTab === "cron") {
+      return <CronManagerPanel pm2Processes={pm2Stats?.processes} />;
+    }
+
+    return (
+      <div className={styles.runLog}>
+        {activityItems.map((item, index) => (
+          <div key={`${item}-${index}`} className={styles.runLogRow}>
+            <span>{new Date(Date.now() - index * 42000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+            <p>{item}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+    <div className={`${styles.appShell} ${density === "compact" ? styles.compactDensity : ""}`}>
       {/* Top bar */}
       <header
         style={{
@@ -141,7 +261,16 @@ export default function OpsPage() {
           </nav>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 11, color: "#555" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#555" }}>
+          <button className={styles.headerButton} onClick={() => setDensity((value) => (value === "compact" ? "comfortable" : "compact"))}>
+            {density === "compact" ? "Comfortable" : "Compact"}
+          </button>
+          <button className={styles.headerButton} onClick={() => setActivityOpen((value) => !value)}>
+            Activity
+          </button>
+          <button className={styles.headerButton} onClick={() => setCommandPaletteOpen(true)}>
+            Ctrl K
+          </button>
           {alertCount > 0 && (
             <span style={{ color: "#f59e0b", fontWeight: 700 }}>
               {alertCount} alert{alertCount !== 1 ? "s" : ""}
@@ -292,25 +421,10 @@ export default function OpsPage() {
 
         {/* Workflows tab */}
         {activeTab === "workflows" && (
-          <div style={{ display: "flex", height: "100%", overflow: "hidden" }}>
+          <div className={styles.workflowWorkspace}>
             {/* Sidebar: workflow list */}
-            <div
-              style={{
-                width: 220,
-                borderRight: "1px solid #222",
-                display: "flex",
-                flexDirection: "column",
-                flexShrink: 0,
-              }}
-            >
-              <div
-                style={{
-                  padding: "12px 12px 8px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
+            <div className={`${styles.workflowSidebar} ${workflowSidebarCollapsed ? styles.workflowSidebarCollapsed : ""}`}>
+              <div className={styles.workflowSidebarHeader}>
                 <span
                   style={{
                     fontSize: 9,
@@ -323,15 +437,15 @@ export default function OpsPage() {
                   Workflows
                 </span>
                 <button
+                  onClick={() => setWorkflowSidebarCollapsed((value) => !value)}
+                  className={styles.iconControl}
+                  title={workflowSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                  {workflowSidebarCollapsed ? "›" : "‹"}
+                </button>
+                <button
                   onClick={handleCreateWorkflow}
-                  style={{
-                    background: "transparent",
-                    border: "1px solid #333",
-                    borderRadius: 4,
-                    padding: "2px 8px",
-                    fontSize: 10,
-                    color: "#888",
-                  }}
+                  className={styles.newWorkflowButton}
                 >
                   + New
                 </button>
@@ -341,17 +455,9 @@ export default function OpsPage() {
                   <div
                     key={wf.id}
                     onClick={() => setActiveWorkflowId(wf.id)}
-                    style={{
-                      padding: "8px 12px",
-                      cursor: "pointer",
-                      background: wf.id === activeWorkflowId ? "#1a1a1a" : "transparent",
-                      borderLeft: wf.id === activeWorkflowId ? "2px solid #a855f7" : "2px solid transparent",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
+                    className={`${styles.workflowCard} ${wf.id === activeWorkflowId ? styles.workflowCardActive : ""}`}
                   >
-                    <span style={{ fontSize: 12, color: wf.id === activeWorkflowId ? "#fff" : "#888" }}>
+                    <span className={styles.workflowName}>
                       {wf.name}
                     </span>
                     <button
@@ -359,13 +465,7 @@ export default function OpsPage() {
                         e.stopPropagation();
                         handleDeleteWorkflow(wf.id);
                       }}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#555",
-                        fontSize: 10,
-                        padding: "2px 4px",
-                      }}
+                      className={styles.deleteWorkflowButton}
                     >
                       ×
                     </button>
@@ -373,27 +473,11 @@ export default function OpsPage() {
                 ))}
               </div>
               {canvasDirty && (
-                <div
-                  style={{
-                    padding: "8px 12px",
-                    borderTop: "1px solid #222",
-                    fontSize: 10,
-                    color: "#f59e0b",
-                  }}
-                >
+                <div className={styles.unsavedBar}>
                   Unsaved changes
                   <button
                     onClick={() => saveFnRef.current?.()}
-                    style={{
-                      marginLeft: 8,
-                      background: "#a855f7",
-                      color: "#000",
-                      border: "none",
-                      borderRadius: 4,
-                      padding: "2px 8px",
-                      fontSize: 10,
-                      fontWeight: 700,
-                    }}
+                    className={styles.unsavedSave}
                   >
                     SAVE
                   </button>
@@ -401,32 +485,111 @@ export default function OpsPage() {
               )}
             </div>
 
-            {/* Canvas */}
-            <div style={{ flex: 1, position: "relative" }}>
-              {activeWorkflow ? (
-                <WorkflowCanvas
-                  workflow={activeWorkflow}
-                  onSave={handleSaveWorkflow}
-                  onRegisterSave={(fn) => {
-                    saveFnRef.current = fn;
-                  }}
-                  onDirtyChange={setCanvasDirty}
-                />
-              ) : (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    height: "100%",
-                    color: "#555",
-                    fontSize: 14,
-                  }}
-                >
-                  Select or create a workflow
+            <section className={styles.workflowContent}>
+              <div className={styles.workflowToolbar}>
+                <div className={styles.breadcrumbs}>
+                  <span>Ops</span>
+                  <span>/</span>
+                  <span>Workflows</span>
+                  {activeWorkflow && (
+                    <>
+                      <span>/</span>
+                      <strong>{activeWorkflow.name}</strong>
+                    </>
+                  )}
                 </div>
-              )}
-            </div>
+                <div className={styles.toolbarActions}>
+                  <button className={styles.headerButton} onClick={() => setDockSide(dockSide === "bottom" ? "right" : "bottom")}>
+                    Dock {dockSide === "bottom" ? "Right" : "Bottom"}
+                  </button>
+                  <button className={styles.headerButton} onClick={() => setCommandPaletteOpen(true)}>
+                    Commands
+                  </button>
+                </div>
+              </div>
+
+              <div className={`${styles.workflowDockLayout} ${dockSide === "right" ? styles.workflowDockRight : ""}`}>
+                <div className={styles.canvasAndBottomDock}>
+                  <div
+                    className={styles.canvasRegion}
+                    style={dockSide === "bottom" ? { height: `calc(100% - ${bottomPanelHeight}px - 8px)` } : undefined}
+                  >
+                    {activeWorkflow ? (
+                      <WorkflowCanvas
+                        workflow={activeWorkflow}
+                        onSave={handleSaveWorkflow}
+                        onRegisterSave={(fn) => {
+                          saveFnRef.current = fn;
+                        }}
+                        onDirtyChange={setCanvasDirty}
+                      />
+                    ) : (
+                      <div className={styles.emptyCanvas}>
+                        Select or create a workflow
+                      </div>
+                    )}
+                  </div>
+
+                  {dockSide === "bottom" && (
+                    <>
+                      <div
+                        className={styles.horizontalDivider}
+                        onMouseDown={startBottomResize}
+                        title="Drag to resize panels"
+                      >
+                        <span />
+                      </div>
+                      <div className={styles.bottomDock} style={{ height: bottomPanelHeight }}>
+                        <div className={styles.dockTabs}>
+                          {(["run", "alerts", "tickets", "cron"] as const).map((tab) => (
+                            <button
+                              key={tab}
+                              className={`${styles.dockTab} ${dockTab === tab ? styles.dockTabActive : ""}`}
+                              onClick={() => setDockTab(tab)}
+                            >
+                              {tab === "run" ? "Run Log" : tab === "alerts" ? "Alerts" : tab === "tickets" ? "Tickets" : "Cron Migration"}
+                            </button>
+                          ))}
+                        </div>
+                        <div className={styles.dockContent}>{renderDockContent()}</div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {dockSide === "right" && (
+                  <aside className={styles.rightDock}>
+                    <div className={styles.dockTabs}>
+                      {(["run", "alerts", "tickets", "cron"] as const).map((tab) => (
+                        <button
+                          key={tab}
+                          className={`${styles.dockTab} ${dockTab === tab ? styles.dockTabActive : ""}`}
+                          onClick={() => setDockTab(tab)}
+                        >
+                          {tab === "run" ? "Run Log" : tab === "alerts" ? "Alerts" : tab === "tickets" ? "Tickets" : "Cron"}
+                        </button>
+                      ))}
+                    </div>
+                    <div className={styles.dockContent}>{renderDockContent()}</div>
+                  </aside>
+                )}
+
+                {activityOpen && (
+                  <aside className={styles.activitySidebar}>
+                    <div className={styles.activityHeader}>
+                      <span>Recent Activity</span>
+                      <button className={styles.iconControl} onClick={() => setActivityOpen(false)}>×</button>
+                    </div>
+                    {activityItems.map((item, index) => (
+                      <div key={`${item}-activity-${index}`} className={styles.activityItem}>
+                        <span className={styles.activityDot} />
+                        <p>{item}</p>
+                      </div>
+                    ))}
+                  </aside>
+                )}
+              </div>
+            </section>
           </div>
         )}
 
@@ -444,6 +607,29 @@ export default function OpsPage() {
           </div>
         )}
       </main>
+
+      {commandPaletteOpen && (
+        <div className={styles.commandOverlay} onMouseDown={() => setCommandPaletteOpen(false)}>
+          <div className={styles.commandPalette} onMouseDown={(event) => event.stopPropagation()}>
+            <input
+              autoFocus
+              value={commandQuery}
+              onChange={(event) => setCommandQuery(event.target.value)}
+              placeholder="Type a command..."
+              className={styles.commandInput}
+            />
+            <div className={styles.commandList}>
+              {filteredCommands.map((command) => (
+                <button key={command.label} className={styles.commandItem} onClick={() => runCommand(command.action)}>
+                  <span>{command.label}</span>
+                  <small>{command.hint}</small>
+                </button>
+              ))}
+              {filteredCommands.length === 0 && <p className={styles.noCommands}>No commands found</p>}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

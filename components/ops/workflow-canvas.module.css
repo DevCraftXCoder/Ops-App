@@ -1,0 +1,309 @@
+.canvasShell {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #0d0d0d;
+}
+
+.fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: #0a0a0a;
+}
+
+.gridFade {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background:
+    radial-gradient(circle at 50% 45%, transparent 0%, transparent 42%, rgba(0, 0, 0, 0.38) 100%),
+    linear-gradient(180deg, rgba(10, 10, 10, 0.28), transparent 18%, transparent 78%, rgba(10, 10, 10, 0.48));
+}
+
+.groupGlow {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, rgba(34, 197, 94, 0.06), transparent 26%, transparent 72%, rgba(59, 130, 246, 0.05)),
+    radial-gradient(circle at 34% 45%, rgba(20, 184, 166, 0.08), transparent 30%);
+}
+
+.edgeTypePanel,
+.zoomPanel,
+.nodePalette,
+.nodeInspector,
+.contextToolbar {
+  background: rgba(24, 24, 26, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(12px);
+}
+
+.edgeTypePanel {
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 10px;
+  color: #ccc;
+}
+
+.zoomPanel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border-radius: 7px;
+  padding: 5px;
+  color: #d6d6d6;
+}
+
+.iconButton,
+.iconButtonWide {
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #d6d6d6;
+  font-size: 11px;
+  font-weight: 700;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.iconButton {
+  width: 28px;
+}
+
+.iconButtonWide {
+  padding: 0 9px;
+}
+
+.iconButton:hover,
+.iconButtonWide:hover {
+  transform: translateY(-1px);
+  border-color: rgba(168, 85, 247, 0.55);
+  background: rgba(168, 85, 247, 0.13);
+}
+
+.minimapControl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 4px;
+  color: #8c8c8c;
+  font-size: 10px;
+}
+
+.minimapControl input {
+  width: 72px;
+  accent-color: #a855f7;
+}
+
+.minimap {
+  border-radius: 4px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5);
+  transition: opacity 180ms ease;
+}
+
+.stickySave {
+  position: sticky;
+  bottom: 10px;
+  background: #22c55e;
+  color: #031407;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+  box-shadow: 0 12px 28px rgba(34, 197, 94, 0.22);
+}
+
+.stickySave:hover {
+  filter: brightness(1.08);
+}
+
+.nodePalette {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  width: 182px;
+  max-height: calc(100% - 28px);
+  overflow-y: auto;
+  border-radius: 7px;
+  padding: 8px;
+}
+
+.nodeSearch {
+  width: 100%;
+  margin-bottom: 7px;
+  background: #101012;
+  border: 1px solid #303036;
+  border-radius: 5px;
+  color: #ddd;
+  font-size: 10px;
+  padding: 6px 7px;
+  outline: none;
+}
+
+.nodeSearch:focus {
+  border-color: rgba(168, 85, 247, 0.72);
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.14);
+}
+
+.templateButton,
+.paletteItem {
+  width: 100%;
+  border-radius: 4px;
+  color: #aaa;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.templateButton {
+  margin-bottom: 9px;
+  padding: 5px 7px;
+  border: 1px solid rgba(34, 197, 94, 0.24);
+  background: rgba(34, 197, 94, 0.08);
+  font-size: 10px;
+  text-align: left;
+}
+
+.paletteItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-left: 2px solid;
+  padding: 4px 6px;
+  margin-bottom: 2px;
+  font-size: 10px;
+}
+
+.paletteItem:hover,
+.templateButton:hover {
+  background: #242428;
+  color: #fff;
+  transform: translateX(1px);
+}
+
+.paletteIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  color: #050505;
+  font-size: 9px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.searchMark {
+  background: rgba(245, 158, 11, 0.24);
+  color: #fbbf24;
+  border-radius: 2px;
+}
+
+.paletteEmpty {
+  color: #666;
+  font-size: 11px;
+  padding: 10px 4px;
+}
+
+.contextToolbar {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 12;
+  display: flex;
+  gap: 6px;
+  transform: translateX(-50%);
+  border-radius: 7px;
+  padding: 5px;
+}
+
+.contextToolbar button {
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #d4d4d4;
+  font-size: 11px;
+  padding: 5px 9px;
+}
+
+.contextToolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.nodeInspector {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  width: 232px;
+  max-height: 80%;
+  overflow-y: auto;
+  border-radius: 7px;
+  padding: 10px;
+  font-size: 11px;
+  color: #ccc;
+}
+
+.alignGuideVertical,
+.alignGuideHorizontal {
+  pointer-events: none;
+  position: absolute;
+  z-index: 8;
+  background: rgba(59, 130, 246, 0.82);
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.45);
+}
+
+.alignGuideVertical {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.alignGuideHorizontal {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.edgeFlow :global(.react-flow__edge-path) {
+  filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.24));
+}
+
+.edgeFlow_success :global(.react-flow__edge-path) {
+  stroke: #22c55e;
+}
+
+.edgeFlow_error :global(.react-flow__edge-path) {
+  stroke: #ef4444;
+  filter: drop-shadow(0 0 8px rgba(239, 68, 68, 0.38));
+}
+
+.edgeFlow_continue :global(.react-flow__edge-path) {
+  stroke: #14b8a6;
+}
+
+.edgeFlow_critical :global(.react-flow__edge-path) {
+  stroke: #f97316;
+  filter: drop-shadow(0 0 8px rgba(249, 115, 22, 0.32));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paletteItem,
+  .iconButton,
+  .iconButtonWide {
+    transition: none;
+  }
+}

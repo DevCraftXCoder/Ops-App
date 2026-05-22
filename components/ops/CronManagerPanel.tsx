@@ -473,7 +473,7 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
 
                 {pm2Proc && (
                   <div className={styles.pm2Detail}>
-                    {pm2Proc.memMb.toFixed(0)} MB · {pm2Proc.cpuPct}% CPU · {pm2Proc.restarts} restarts
+                    <strong>{pm2Proc.memMb.toFixed(0)} MB</strong> · <strong>{pm2Proc.cpuPct}% CPU</strong> · <strong>{pm2Proc.restarts}</strong> restarts
                   </div>
                 )}
 

@@ -1,0 +1,467 @@
+.appShell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.headerButton,
+.newWorkflowButton,
+.iconControl {
+  border: 1px solid #333;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.03);
+  color: #aaa;
+  font-size: 11px;
+  padding: 5px 9px;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.headerButton:hover,
+.newWorkflowButton:hover,
+.iconControl:hover {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.38);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.workflowWorkspace {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  background: #09090a;
+}
+
+.workflowSidebar {
+  width: 232px;
+  border-right: 1px solid #222;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  background: #0f0f17;
+  transition: width 240ms ease, opacity 240ms ease;
+}
+
+.workflowSidebarCollapsed {
+  width: 42px;
+}
+
+.workflowSidebarCollapsed .newWorkflowButton,
+.workflowSidebarCollapsed .workflowName,
+.workflowSidebarCollapsed .deleteWorkflowButton,
+.workflowSidebarCollapsed .unsavedBar {
+  display: none;
+}
+
+.workflowSidebarHeader {
+  padding: 12px 10px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.workflowCard {
+  padding: 9px 12px;
+  cursor: pointer;
+  background: transparent;
+  border-left: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.workflowCard:hover {
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.06), 0 0 24px rgba(168, 85, 247, 0.08);
+}
+
+.workflowCardActive {
+  background: rgba(168, 85, 247, 0.1);
+  border-left-color: #a855f7;
+}
+
+.workflowCardActive:hover {
+  box-shadow: inset 0 0 0 1px rgba(168, 85, 247, 0.18), 0 0 28px rgba(168, 85, 247, 0.18);
+}
+
+.workflowName {
+  font-size: 12px;
+  color: #dcdcdc;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deleteWorkflowButton {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.unsavedBar {
+  position: sticky;
+  bottom: 0;
+  padding: 10px 12px;
+  border-top: 1px solid #222;
+  background: rgba(20, 20, 22, 0.96);
+  font-size: 10px;
+  color: #f59e0b;
+  z-index: 3;
+}
+
+.unsavedSave {
+  margin-left: 8px;
+  background: #a855f7;
+  color: #050505;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.workflowContent {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.workflowToolbar {
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  border-bottom: 1px solid #202026;
+  background: rgba(13, 13, 15, 0.98);
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #666;
+}
+
+.breadcrumbs strong {
+  color: #e6e6e6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.workflowDockLayout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 248px;
+  min-height: 0;
+  overflow: hidden;
+  transition: grid-template-columns 240ms ease;
+}
+
+.workflowDockRight {
+  grid-template-columns: minmax(0, 1fr) 360px 248px;
+}
+
+.canvasAndBottomDock {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.canvasRegion {
+  position: relative;
+  min-height: 260px;
+  flex: 1;
+  overflow: hidden;
+  transition: height 220ms ease;
+}
+
+.emptyCanvas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #555;
+  font-size: 14px;
+}
+
+.horizontalDivider {
+  height: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  cursor: row-resize;
+  background: #0f0f17;
+  border-top: 1px solid #222;
+  border-bottom: 1px solid #222;
+  transition: background 160ms ease;
+}
+
+.horizontalDivider:hover,
+.resizingDock .horizontalDivider {
+  background: rgba(168, 85, 247, 0.12);
+}
+
+.horizontalDivider span {
+  width: 44px;
+  height: 2px;
+  border-radius: 999px;
+  background: #555;
+}
+
+.resizingDock,
+.resizingDock * {
+  cursor: row-resize !important;
+  user-select: none;
+}
+
+.bottomDock,
+.rightDock,
+.activitySidebar {
+  background: #101012;
+  border-color: #24242a;
+  transition: width 240ms ease, height 240ms ease, opacity 200ms ease, transform 200ms ease;
+}
+
+.bottomDock {
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  max-height: 520px;
+  flex-shrink: 0;
+}
+
+.rightDock {
+  min-width: 0;
+  border-left: 1px solid #24242a;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dockTabs {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  border-bottom: 1px solid #24242a;
+  background: #11111a;
+  flex-shrink: 0;
+}
+
+.dockTab {
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #858596;
+  padding: 9px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  transition: color 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.dockTab:hover {
+  color: #dedede;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dockTabActive {
+  color: #fff;
+  background: rgba(59, 130, 246, 0.12);
+  border-bottom-color: #3b82f6;
+}
+
+.dockContent {
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+
+.activitySidebar {
+  min-width: 0;
+  border-left: 1px solid #24242a;
+  overflow: auto;
+  padding: 12px;
+}
+
+.activityHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #8b8b98;
+  text-transform: uppercase;
+}
+
+.activityItem {
+  display: grid;
+  grid-template-columns: 8px 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  color: #b5b5bc;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.activityDot {
+  width: 7px;
+  height: 7px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+}
+
+.runLog {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.runLogRow {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid #26262c;
+  border-radius: 6px;
+  background: #171719;
+  color: #bdbdc4;
+  font-size: 12px;
+}
+
+.runLogRow span {
+  color: #666;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+}
+
+.compactDensity .workflowCard {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.compactDensity .dockContent {
+  padding: 9px;
+}
+
+.compactDensity .workflowToolbar {
+  height: 34px;
+}
+
+.commandOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  background: rgba(0, 0, 0, 0.46);
+  backdrop-filter: blur(5px);
+}
+
+.commandPalette {
+  width: min(560px, calc(100vw - 32px));
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(18, 18, 21, 0.96);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.56);
+}
+
+.commandInput {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #2a2a31;
+  background: #111116;
+  color: #fff;
+  font-size: 15px;
+  padding: 14px 16px;
+  outline: none;
+}
+
+.commandList {
+  max-height: 340px;
+  overflow: auto;
+  padding: 6px;
+}
+
+.commandItem {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #e4e4e4;
+  padding: 10px;
+  text-align: left;
+}
+
+.commandItem:hover {
+  background: rgba(168, 85, 247, 0.14);
+}
+
+.commandItem small,
+.noCommands {
+  color: #777;
+  font-size: 11px;
+}
+
+.noCommands {
+  padding: 18px 12px;
+}
+
+@media (max-width: 980px) {
+  .workflowDockLayout,
+  .workflowDockRight {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .activitySidebar,
+  .rightDock {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflowSidebar,
+  .workflowCard,
+  .canvasRegion,
+  .bottomDock,
+  .rightDock,
+  .activitySidebar,
+  .headerButton,
+  .newWorkflowButton,
+  .iconControl {
+    transition: none;
+  }
+}

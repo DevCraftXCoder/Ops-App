@@ -75,3 +75,67 @@ button {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+.workflow-node-shell {
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    filter 180ms ease;
+}
+
+.workflow-node-shell:hover {
+  transform: translateY(-1px);
+  border-color: rgba(168, 85, 247, 0.44) !important;
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.5),
+    0 0 30px rgba(168, 85, 247, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.react-flow__node.selected .workflow-node-shell {
+  border-color: rgba(168, 85, 247, 0.72) !important;
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.52),
+    0 0 0 1px rgba(168, 85, 247, 0.22),
+    0 0 34px rgba(168, 85, 247, 0.3) !important;
+}
+
+.workflow-node-error {
+  animation: error-glow 1.8s ease-in-out infinite;
+}
+
+.workflow-group-container {
+  width: 100%;
+  height: 100%;
+  border: 1px dashed rgba(168, 85, 247, 0.52);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(168, 85, 247, 0.09), rgba(20, 184, 166, 0.04)),
+    rgba(10, 10, 12, 0.2);
+  box-shadow: inset 0 0 28px rgba(168, 85, 247, 0.08);
+  color: rgba(216, 180, 254, 0.85);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 12px;
+}
+
+@keyframes error-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(239, 68, 68, 0));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.34));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workflow-node-shell,
+  .workflow-node-error {
+    animation: none;
+    transition: none;
+  }
+}

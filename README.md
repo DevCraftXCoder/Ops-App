@@ -35,3 +35,10 @@ npm run deploy   # builds via opennextjs-cloudflare + wrangler deploy
 ## Design
 
 Dark theme (`#0a0a0a` background), purple accent (`#a855f7`), Syne headings, DM Sans body, JetBrains Mono code. Matches the Frxncois design system.
+
+## Recent Additions (Last 30 Days)
+
+- Ops workflow UI refinements — streamlined alert and ticket creation
+- OpenRouter LLM backend (replaces direct Anthropic API) — multi-provider model selection
+- @opennextjs/cloudflare 1.19 compatibility fixes + open-next config
+- PM2 control panel with direct process management, gamemode suspend toggles, and Swarm integration

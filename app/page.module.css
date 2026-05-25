@@ -22,6 +22,7 @@
 .iconControl:hover {
   background: rgba(168, 85, 247, 0.12);
   border-color: rgba(168, 85, 247, 0.38);
+  border-left: 2px solid #e94560;
   color: #fff;
   transform: translateY(-1px);
 }
@@ -464,4 +465,128 @@
   .iconControl {
     transition: none;
   }
+}
+
+/* ─── Improvement 1: App header ─────────────────────────────────── */
+.appHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 48px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #1e1e1e;
+  background: linear-gradient(180deg, #0f0f0f 0%, #0a0a0a 100%);
+}
+
+/* Brand mark with left accent bar */
+.brandMark {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding-left: 10px;
+  border-left: 3px solid #e94560;
+}
+
+.brandTitle {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.brandOps {
+  color: #e94560;
+}
+
+.brandDotApp {
+  color: #444;
+}
+
+/* Header right actions group */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+/* ─── Improvement 2: Segmented nav tabs ─────────────────────────── */
+.tabNav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid #1f1f1f;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.tabNavButton {
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #777;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  transition: color 140ms ease, background 140ms ease;
+  white-space: nowrap;
+}
+
+.tabNavButton:hover {
+  color: #ccc;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tabNavButtonActive {
+  background: #e94560;
+  color: #fff;
+  font-weight: 600;
+}
+
+.tabNavButtonActive:hover {
+  background: #d63a52;
+  color: #fff;
+}
+
+/* ─── Improvement 3+5: Panel section labels ─────────────────────── */
+.panelLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #888;
+}
+
+.dashPanel {
+  /* base panel styles — overrides applied inline per panel */
+}
+
+/* ─── Improvement 4: Alert/ticket badge pills ───────────────────── */
+.alertBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  background: #e94560;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ticketBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
 }

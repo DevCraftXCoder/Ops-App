@@ -216,24 +216,18 @@ export default function OpsPage() {
   return (
     <div className={`${styles.appShell} ${density === "compact" ? styles.compactDensity : ""}`}>
       {/* Top bar */}
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "0 20px",
-          height: 48,
-          borderBottom: "1px solid #222",
-          background: "#0d0d0d",
-          flexShrink: 0,
-        }}
-      >
+      <header className={styles.appHeader}>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <h1 style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.02em" }}>
-            <span style={{ color: "#a855f7" }}>ops</span>
-            <span style={{ color: "#555" }}>.app</span>
-          </h1>
-          <nav style={{ display: "flex", gap: 0 }}>
+          {/* Brand mark with left accent bar */}
+          <div className={styles.brandMark}>
+            <h1 className={styles.brandTitle}>
+              <span className={styles.brandOps}>ops</span>
+              <span className={styles.brandDotApp}>.app</span>
+            </h1>
+          </div>
+
+          {/* Segmented nav tabs */}
+          <nav className={styles.tabNav}>
             {(
               [
                 { key: "dashboard", label: "Dashboard" },
@@ -245,15 +239,7 @@ export default function OpsPage() {
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                style={{
-                  padding: "12px 16px",
-                  fontSize: 13,
-                  color: activeTab === tab.key ? "#fff" : "#666",
-                  background: "transparent",
-                  border: "none",
-                  borderBottom: activeTab === tab.key ? "2px solid #a855f7" : "2px solid transparent",
-                  transition: "color 0.15s",
-                }}
+                className={`${styles.tabNavButton} ${activeTab === tab.key ? styles.tabNavButtonActive : ""}`}
               >
                 {tab.label}
               </button>
@@ -261,24 +247,25 @@ export default function OpsPage() {
           </nav>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "#555" }}>
+        {/* Utility buttons + badges */}
+        <div className={styles.headerActions}>
           <button className={styles.headerButton} onClick={() => setDensity((value) => (value === "compact" ? "comfortable" : "compact"))}>
-            {density === "compact" ? "Comfortable" : "Compact"}
+            {density === "compact" ? "▣ Comfy" : "▤ Dense"}
           </button>
           <button className={styles.headerButton} onClick={() => setActivityOpen((value) => !value)}>
-            Activity
+            ◫ Activity
           </button>
           <button className={styles.headerButton} onClick={() => setCommandPaletteOpen(true)}>
-            Ctrl K
+            ⌘K
           </button>
           {alertCount > 0 && (
-            <span style={{ color: "#f59e0b", fontWeight: 700 }}>
-              {alertCount} alert{alertCount !== 1 ? "s" : ""}
+            <span className={styles.alertBadge}>
+              ● {alertCount} alert{alertCount !== 1 ? "s" : ""}
             </span>
           )}
           {ticketCount > 0 && (
-            <span style={{ color: "#3b82f6" }}>
-              {ticketCount} ticket{ticketCount !== 1 ? "s" : ""}
+            <span className={styles.ticketBadge}>
+              # {ticketCount} ticket{ticketCount !== 1 ? "s" : ""}
             </span>
           )}
         </div>
@@ -298,40 +285,22 @@ export default function OpsPage() {
             }}
           >
             {/* Left: Server Metrics */}
-            <div
-              style={{
-                borderRight: isMobile ? "none" : "1px solid #222",
-                padding: 16,
-                overflowY: "auto",
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "#555",
-                  marginBottom: 12,
-                }}
-              >
+            <div className={styles.dashPanel} style={{
+              borderRight: isMobile ? "none" : "1px solid #1e1e1e",
+              borderTop: "2px solid #3b82f6",
+              background: "linear-gradient(180deg, rgba(59,130,246,0.06) 0%, transparent 40px), rgba(255,255,255,0.015)",
+              padding: 16,
+              overflowY: "auto",
+            }}>
+              <div className={styles.panelLabel} style={{ borderLeft: "2px solid #3b82f6", paddingLeft: 8, marginBottom: 12 }}>
                 Server Metrics
               </div>
               <ServerMetricsPanel onMetricsUpdate={setMetrics} />
 
               {pm2Stats && (
                 <>
-                  <div style={{ borderTop: "1px solid #222", margin: "12px 0" }} />
-                  <div
-                    style={{
-                      fontSize: 9,
-                      fontWeight: 700,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      color: "#555",
-                      marginBottom: 8,
-                    }}
-                  >
+                  <div style={{ borderTop: "1px solid #1e1e1e", margin: "12px 0" }} />
+                  <div className={styles.panelLabel} style={{ borderLeft: "2px solid #22c55e", paddingLeft: 8, marginBottom: 8 }}>
                     PM2 ({pm2Stats.processes.length} processes · {pm2Stats.totalMemMb.toFixed(0)} MB)
                   </div>
                   {pm2Stats.processes.slice(0, 8).map((p) => (
@@ -341,9 +310,9 @@ export default function OpsPage() {
                         display: "flex",
                         alignItems: "center",
                         gap: 6,
-                        fontSize: 10,
+                        fontSize: 11,
                         color: "#ccc",
-                        marginBottom: 3,
+                        marginBottom: 4,
                       }}
                     >
                       <span
@@ -358,7 +327,7 @@ export default function OpsPage() {
                       <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {p.name}
                       </span>
-                      <span style={{ color: "#555", fontSize: 9 }}>{p.memMb.toFixed(0)}MB</span>
+                      <span style={{ color: "#666", fontSize: 10 }}>{p.memMb.toFixed(0)}MB</span>
                     </div>
                   ))}
                 </>
@@ -366,24 +335,15 @@ export default function OpsPage() {
             </div>
 
             {/* Center: Alerts */}
-            <div
-              style={{
-                borderRight: isMobile ? "none" : "1px solid #222",
-                display: "flex",
-                flexDirection: "column",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  padding: "12px 16px 8px",
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "#555",
-                }}
-              >
+            <div className={styles.dashPanel} style={{
+              borderRight: isMobile ? "none" : "1px solid #1e1e1e",
+              borderTop: "2px solid #e94560",
+              background: "linear-gradient(180deg, rgba(233,69,96,0.06) 0%, transparent 40px), rgba(255,255,255,0.015)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}>
+              <div className={styles.panelLabel} style={{ padding: "12px 16px 8px", borderLeft: "2px solid #e94560", marginLeft: 16 }}>
                 Alerts
               </div>
               <div style={{ flex: 1, overflowY: "auto" }}>
@@ -396,17 +356,14 @@ export default function OpsPage() {
             </div>
 
             {/* Right: Tickets */}
-            <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
-              <div
-                style={{
-                  padding: "12px 16px 8px",
-                  fontSize: 9,
-                  fontWeight: 700,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "#555",
-                }}
-              >
+            <div className={styles.dashPanel} style={{
+              borderTop: "2px solid #a855f7",
+              background: "linear-gradient(180deg, rgba(168,85,247,0.06) 0%, transparent 40px), rgba(255,255,255,0.015)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}>
+              <div className={styles.panelLabel} style={{ padding: "12px 16px 8px", borderLeft: "2px solid #a855f7", marginLeft: 16 }}>
                 Tickets
               </div>
               <div style={{ flex: 1, overflowY: "auto" }}>

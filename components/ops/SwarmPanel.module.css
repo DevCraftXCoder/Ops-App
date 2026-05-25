@@ -223,11 +223,9 @@
 
 /* Agent multi-select list */
 .agentGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-height: 180px;
-  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
   background: #0d0d0d;
   border: 1px solid #333;
   border-radius: 4px;

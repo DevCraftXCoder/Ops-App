@@ -368,6 +368,7 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
   const [inspectedJobName, setInspectedJobName] = useState<string | null>(null);
   const [lastSyncAt, setLastSyncAt] = useState<number | null>(null);
+  const [confirmCronDeleteId, setConfirmCronDeleteId] = useState<string | null>(null);
   const deferredSearch = useDeferredValue(searchQuery.trim().toLowerCase());
 
   const fetchData = useCallback(async () => {
@@ -559,10 +560,14 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
     }
   }, [fetchData]);
 
-  const handleDelete = useCallback(async (job: CronJobRow) => {
-    if (!window.confirm(`Delete CF cron job "${job.name}"?`)) return;
+  const handleDelete = useCallback((job: CronJobRow) => {
+    setConfirmCronDeleteId(job.id);
+  }, []);
+
+  const confirmCronDelete = useCallback(async (id: string) => {
+    setConfirmCronDeleteId(null);
     try {
-      const res = await fetch(`/api/ops/cron-manager?id=${encodeURIComponent(job.id)}`, {
+      const res = await fetch(`/api/ops/cron-manager?id=${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -1291,7 +1296,7 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
                       </button>
                     </td>
                     <td className={styles.td}>
-                      <button className={styles.ghostButtonDanger} onClick={() => { void handleDelete(job); }}>
+                      <button className={styles.ghostButtonDanger} onClick={() => handleDelete(job)}>
                         Remove
                       </button>
                     </td>
@@ -1405,6 +1410,44 @@ export function CronManagerPanel({ pm2Processes }: CronManagerPanelProps) {
           {cfJobs.filter((job) => job.migrated_from !== null).length === 0 && (
             <p className={styles.empty}>No migrations recorded yet.</p>
           )}
+        </div>
+      )}
+
+      {/* Inline delete confirmation */}
+      {confirmCronDeleteId !== null && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 60,
+          background: "rgba(0,0,0,0.7)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{
+            background: "#111", border: "1px solid #333", borderRadius: 8,
+            padding: "20px 24px", maxWidth: 340, width: "100%",
+          }}>
+            <p style={{ color: "#e5e5e5", fontSize: 13, marginBottom: 16 }}>
+              {`Delete CF cron job "${cfJobs.find((j) => j.id === confirmCronDeleteId)?.name ?? confirmCronDeleteId}"?`}
+            </p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setConfirmCronDeleteId(null)}
+                style={{
+                  padding: "6px 14px", background: "#1e1e1e", border: "1px solid #333",
+                  borderRadius: 4, color: "#999", cursor: "pointer", fontSize: 12,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { void confirmCronDelete(confirmCronDeleteId); }}
+                style={{
+                  padding: "6px 14px", background: "#7f1d1d", border: "1px solid #dc2828",
+                  borderRadius: 4, color: "#fca5a5", cursor: "pointer", fontSize: 12,
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

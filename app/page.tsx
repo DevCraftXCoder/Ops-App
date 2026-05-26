@@ -37,6 +37,9 @@ export default function OpsPage() {
   const [workflows, setWorkflows] = useState<WorkflowData[]>([]);
   const [activeWorkflowId, setActiveWorkflowId] = useState<string | null>(null);
   const [canvasDirty, setCanvasDirty] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newWorkflowName, setNewWorkflowName] = useState("");
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const saveFnRef = useRef<(() => void) | null>(null);
   const [workflowSidebarCollapsed, setWorkflowSidebarCollapsed] = useState(false);
   const [dockTab, setDockTab] = useState<DockTab>("cron");
@@ -91,20 +94,26 @@ export default function OpsPage() {
     [activeWorkflowId]
   );
 
-  const handleCreateWorkflow = useCallback(async () => {
-    const name = prompt("Workflow name:");
-    if (!name?.trim()) return;
+  const handleCreateWorkflow = useCallback(() => {
+    setNewWorkflowName("");
+    setShowCreateModal(true);
+  }, []);
+
+  const submitCreateWorkflow = useCallback(async () => {
+    if (!newWorkflowName.trim()) return;
+    setShowCreateModal(false);
     const res = await fetch("/api/ops/workflows", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: name.trim() }),
+      body: JSON.stringify({ name: newWorkflowName.trim() }),
     });
     if (res.ok) {
       const wf: WorkflowData = await res.json();
       setWorkflows((prev) => [...prev, wf]);
       setActiveWorkflowId(wf.id);
     }
-  }, []);
+    setNewWorkflowName("");
+  }, [newWorkflowName]);
 
   const startBottomResize = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -166,8 +175,15 @@ export default function OpsPage() {
   };
 
   const handleDeleteWorkflow = useCallback(
+    (id: string) => {
+      setDeleteTargetId(id);
+    },
+    []
+  );
+
+  const confirmDeleteWorkflow = useCallback(
     async (id: string) => {
-      if (!confirm("Delete this workflow?")) return;
+      setDeleteTargetId(null);
       await fetch(`/api/ops/workflows?id=${id}`, { method: "DELETE" });
       setWorkflows((prev) => prev.filter((w) => w.id !== id));
       if (activeWorkflowId === id) {
@@ -564,6 +580,98 @@ export default function OpsPage() {
           </div>
         )}
       </main>
+
+      {/* Create workflow modal */}
+      {showCreateModal && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 60,
+          background: "rgba(0,0,0,0.7)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }} onMouseDown={() => setShowCreateModal(false)}>
+          <div
+            style={{
+              background: "#111", border: "1px solid #333", borderRadius: 8,
+              padding: "20px 24px", maxWidth: 360, width: "100%",
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <p style={{ color: "#e5e5e5", fontSize: 13, marginBottom: 12 }}>Workflow name</p>
+            <input
+              autoFocus
+              value={newWorkflowName}
+              onChange={(e) => setNewWorkflowName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") void submitCreateWorkflow();
+                if (e.key === "Escape") setShowCreateModal(false);
+              }}
+              placeholder="e.g. Deploy pipeline"
+              style={{
+                width: "100%", boxSizing: "border-box",
+                background: "#0a0a0a", border: "1px solid #333", borderRadius: 4,
+                color: "#e5e5e5", padding: "6px 10px", fontSize: 13, marginBottom: 16,
+              }}
+            />
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                style={{
+                  padding: "6px 14px", background: "#1e1e1e", border: "1px solid #333",
+                  borderRadius: 4, color: "#999", cursor: "pointer", fontSize: 12,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void submitCreateWorkflow()}
+                style={{
+                  padding: "6px 14px", background: "#1d3a1d", border: "1px solid #22c55e",
+                  borderRadius: 4, color: "#86efac", cursor: "pointer", fontSize: 12,
+                }}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete workflow confirm */}
+      {deleteTargetId !== null && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 60,
+          background: "rgba(0,0,0,0.7)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{
+            background: "#111", border: "1px solid #333", borderRadius: 8,
+            padding: "20px 24px", maxWidth: 340, width: "100%",
+          }}>
+            <p style={{ color: "#e5e5e5", fontSize: 13, marginBottom: 16 }}>
+              Delete this workflow?
+            </p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setDeleteTargetId(null)}
+                style={{
+                  padding: "6px 14px", background: "#1e1e1e", border: "1px solid #333",
+                  borderRadius: 4, color: "#999", cursor: "pointer", fontSize: 12,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => void confirmDeleteWorkflow(deleteTargetId)}
+                style={{
+                  padding: "6px 14px", background: "#7f1d1d", border: "1px solid #dc2828",
+                  borderRadius: 4, color: "#fca5a5", cursor: "pointer", fontSize: 12,
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {commandPaletteOpen && (
         <div className={styles.commandOverlay} onMouseDown={() => setCommandPaletteOpen(false)}>

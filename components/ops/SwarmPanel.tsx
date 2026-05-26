@@ -109,6 +109,7 @@ export function SwarmPanel() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [launching, setLaunching] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Config form state
@@ -235,15 +236,25 @@ export function SwarmPanel() {
 
   // ── Delete def ──────────────────────────────────────────────────────────────
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(() => {
     if (!selectedDefId) return;
-    if (!confirm("Delete this swarm definition? Existing runs will be orphaned.")) return;
-    setDefs((prev) => prev.filter((d) => d.id !== selectedDefId));
+    setConfirmDeleteId(selectedDefId);
+  }, [selectedDefId]);
+
+  const confirmDelete = useCallback(async (id: string) => {
+    setConfirmDeleteId(null);
+    try {
+      await fetch(`/api/ops/swarm?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    } catch {
+      setError("Failed to delete swarm");
+      return;
+    }
+    setDefs((prev) => prev.filter((d) => d.id !== id));
     setSelectedDefId(null);
     setFormName("");
     setFormTask("");
     setFormAgents([]);
-  }, [selectedDefId]);
+  }, []);
 
   // ── Launch run ──────────────────────────────────────────────────────────────
 
@@ -315,7 +326,45 @@ export function SwarmPanel() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} style={{ position: "relative" }}>
+      {/* Inline delete confirmation */}
+      {confirmDeleteId !== null && (
+        <div style={{
+          position: "absolute", inset: 0, zIndex: 50,
+          background: "rgba(0,0,0,0.7)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <div style={{
+            background: "#111", border: "1px solid #333", borderRadius: 8,
+            padding: "20px 24px", maxWidth: 340, width: "100%",
+          }}>
+            <p style={{ color: "#e5e5e5", fontSize: 13, marginBottom: 16 }}>
+              Delete this swarm definition? Existing runs will be orphaned.
+            </p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                style={{
+                  padding: "6px 14px", background: "#1e1e1e", border: "1px solid #333",
+                  borderRadius: 4, color: "#999", cursor: "pointer", fontSize: 12,
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { void confirmDelete(confirmDeleteId); }}
+                style={{
+                  padding: "6px 14px", background: "#7f1d1d", border: "1px solid #dc2828",
+                  borderRadius: 4, color: "#fca5a5", cursor: "pointer", fontSize: 12,
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <div className={styles.sidebar}>
         <div className={styles.sidebarHeader}>

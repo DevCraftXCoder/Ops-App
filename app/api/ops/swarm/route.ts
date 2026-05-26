@@ -379,3 +379,24 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ error: "invalid_action" }, { status: 400 });
 }
+
+export async function DELETE(req: NextRequest) {
+  if (!(await isAuthed())) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json({ error: "id_required" }, { status: 400 });
+    }
+
+    const defs = await loadDefs();
+    const filtered = defs.filter((d) => d.id !== id);
+    await saveDefs(filtered);
+    return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+  }
+}

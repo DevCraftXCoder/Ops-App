@@ -17,7 +17,8 @@ import {
   Connection,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { NODE_TYPES, NODE_PALETTE, EDGE_TYPE_OPTIONS } from "./nodes";
+import { NODE_TYPES } from "./nodes";
+import { NODE_PALETTE, EDGE_TYPE_OPTIONS } from "./node-config";
 import { theme } from "@/lib/theme";
 import styles from "./workflow-canvas.module.css";
 

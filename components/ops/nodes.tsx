@@ -2,16 +2,9 @@
 
 import React from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
-
-// ── Accent colors ──────────────────────────────────────────────────────────────
-const GREEN  = "#22c55e";
-const AMBER  = "#f59e0b";
-const BLUE   = "#3b82f6";
-const TEAL   = "#14b8a6";
-const ORANGE = "#f97316";
-const RED    = "#dc2828";
-const PURPLE = "#a855f7";
-const GREY   = "#6b7280";
+import {
+  GREEN, AMBER, BLUE, TEAL, ORANGE, RED, PURPLE, GREY,
+} from "./node-config";
 
 // ── BaseNode ───────────────────────────────────────────────────────────────────
 function BaseNode({
@@ -112,6 +105,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        aria-label={label}
         style={{
           width: "100%",
           background: "#111",
@@ -130,20 +124,21 @@ function Field({
 }
 
 // ── Trigger nodes ──────────────────────────────────────────────────────────────
-function ScheduleNode({ data }: NodeProps) {
+export function ScheduleNode({ data }: NodeProps) {
   const d = data as { cron?: string; enabled?: boolean; onChange?: (k: string, v: unknown) => void };
   return (
     <BaseNode accent={BLUE} label="Schedule Trigger" hasTarget={false}>
       <Field label="Cron" value={d.cron ?? ""} onChange={(v) => d.onChange?.("cron", v)} placeholder="0 * * * *" />
       <label style={{ display: "flex", alignItems: "center", gap: 4, cursor: "pointer" }} className="nodrag">
-        <input type="checkbox" checked={!!d.enabled} onChange={(e) => d.onChange?.("enabled", e.target.checked)} className="nodrag" />
+        <input type="checkbox" checked={!!d.enabled} onChange={(e) => d.onChange?.("enabled", e.target.checked)} className="nodrag" aria-label="Enabled" />
         <span style={{ fontSize: 10 }}>Enabled</span>
       </label>
     </BaseNode>
   );
 }
+ScheduleNode.displayName = "ScheduleNode";
 
-function OnDemandNode({ data }: NodeProps) {
+export function OnDemandNode({ data }: NodeProps) {
   const d = data as { label?: string; onChange?: (k: string, v: unknown) => void };
   return (
     <BaseNode accent={GREEN} label="On Demand" hasTarget={false}>
@@ -151,8 +146,9 @@ function OnDemandNode({ data }: NodeProps) {
     </BaseNode>
   );
 }
+OnDemandNode.displayName = "OnDemandNode";
 
-function WatchFileNode({ data }: NodeProps) {
+export function WatchFileNode({ data }: NodeProps) {
   const d = data as { filePath?: string; onChange?: (k: string, v: unknown) => void };
   return (
     <BaseNode accent={AMBER} label="Watch File" hasTarget={false}>
@@ -160,9 +156,10 @@ function WatchFileNode({ data }: NodeProps) {
     </BaseNode>
   );
 }
+WatchFileNode.displayName = "WatchFileNode";
 
 // ── Action nodes ───────────────────────────────────────────────────────────────
-function ShellScriptNode({ data }: NodeProps) {
+export function ShellScriptNode({ data }: NodeProps) {
   const d = data as { script?: string };
   const preview = (d.script ?? "").split("\n")[0] || "(empty)";
   return (
@@ -175,8 +172,9 @@ function ShellScriptNode({ data }: NodeProps) {
     </BaseNode>
   );
 }
+ShellScriptNode.displayName = "ShellScriptNode";
 
-function HttpRequestNode({ data }: NodeProps) {
+export function HttpRequestNode({ data }: NodeProps) {
   const d = data as { method?: string; url?: string; onChange?: (k: string, v: unknown) => void };
   return (
     <BaseNode accent={BLUE} label="HTTP Request">
@@ -185,6 +183,7 @@ function HttpRequestNode({ data }: NodeProps) {
           value={d.method ?? "GET"}
           onChange={(e) => d.onChange?.("method", e.target.value)}
           className="nodrag"
+          aria-label="HTTP method"
           style={{ background: "#1a1a1a", border: "1px solid #333", borderRadius: 3, padding: "2px 4px", fontSize: 10, color: "#ccc", width: 60 }}
         >
           {["GET", "POST", "PUT", "DELETE", "PATCH"].map((m) => (
@@ -196,6 +195,7 @@ function HttpRequestNode({ data }: NodeProps) {
           value={d.url ?? ""}
           onChange={(e) => d.onChange?.("url", e.target.value)}
           placeholder="https://..."
+          aria-label="Request URL"
           className="nodrag"
           style={{ flex: 1, background: "#111", border: "1px solid #333", borderRadius: 3, padding: "2px 4px", fontSize: 10, color: "#ccc", outline: "none", minWidth: 0 }}
         />
@@ -203,8 +203,9 @@ function HttpRequestNode({ data }: NodeProps) {
     </BaseNode>
   );
 }
+HttpRequestNode.displayName = "HttpRequestNode";
 
-function SendEmailNode({ data }: NodeProps) {
+export function SendEmailNode({ data }: NodeProps) {
   const d = data as { to?: string; subject?: string; onChange?: (k: string, v: unknown) => void };
   return (
     <BaseNode accent={GREEN} label="Send Email">
@@ -213,8 +214,9 @@ function SendEmailNode({ data }: NodeProps) {
     </BaseNode>
   );
 }
+SendEmailNode.displayName = "SendEmailNode";
 
-function WebhookNode({ data }: NodeProps) {
+export function WebhookNode({ data }: NodeProps) {
   const d = data as { url?: string; onChange?: (k: string, v: unknown) => void };
   return (
     <BaseNode accent={PURPLE} label="Webhook">
@@ -222,8 +224,9 @@ function WebhookNode({ data }: NodeProps) {
     </BaseNode>
   );
 }
+WebhookNode.displayName = "WebhookNode";
 
-function CreateTicketNode({ data }: NodeProps) {
+export function CreateTicketNode({ data }: NodeProps) {
   const d = data as { title?: string; severity?: string; onChange?: (k: string, v: unknown) => void };
   return (
     <BaseNode accent={RED} label="Create Ticket">
@@ -234,6 +237,7 @@ function CreateTicketNode({ data }: NodeProps) {
           value={d.severity ?? "medium"}
           onChange={(e) => d.onChange?.("severity", e.target.value)}
           className="nodrag"
+          aria-label="Severity"
           style={{ width: "100%", background: "#1a1a1a", border: "1px solid #333", borderRadius: 3, padding: "2px 4px", fontSize: 10, color: "#ccc" }}
         >
           {["low", "medium", "high", "critical"].map((s) => <option key={s} style={{ background: "#1a1a1a", color: "#fff" }}>{s}</option>)}
@@ -242,9 +246,10 @@ function CreateTicketNode({ data }: NodeProps) {
     </BaseNode>
   );
 }
+CreateTicketNode.displayName = "CreateTicketNode";
 
 // ── Flow control nodes ─────────────────────────────────────────────────────────
-function SplitNode({ data }: NodeProps) {
+export function SplitNode({ data }: NodeProps) {
   const d = data as { label?: string };
   return (
     <div className="workflow-node-shell" style={{ background: "linear-gradient(135deg, rgba(45,30,18,0.92), rgba(20,18,16,0.88))", border: "1px solid rgba(249,115,22,0.34)", borderLeft: `3px solid ${ORANGE}`, borderRadius: 6, padding: "8px 10px", minWidth: 176, fontSize: 11, color: "#ccc", position: "relative", boxShadow: "0 16px 34px rgba(0,0,0,0.44), 0 0 24px rgba(249,115,22,0.12)" }}>
@@ -256,8 +261,9 @@ function SplitNode({ data }: NodeProps) {
     </div>
   );
 }
+SplitNode.displayName = "SplitNode";
 
-function GroupContainerNode({ data }: NodeProps) {
+export function GroupContainerNode({ data }: NodeProps) {
   const d = data as { label?: string };
   return (
     <div className="workflow-group-container">
@@ -265,8 +271,9 @@ function GroupContainerNode({ data }: NodeProps) {
     </div>
   );
 }
+GroupContainerNode.displayName = "GroupContainerNode";
 
-function MultiplexNode({ data }: NodeProps) {
+export function MultiplexNode({ data }: NodeProps) {
   const d = data as { staggerMs?: number; onChange?: (k: string, v: unknown) => void };
   return (
     <BaseNode accent={PURPLE} label="Multiplex">
@@ -274,14 +281,16 @@ function MultiplexNode({ data }: NodeProps) {
     </BaseNode>
   );
 }
+MultiplexNode.displayName = "MultiplexNode";
 
-function JoinNode() {
+export function JoinNode() {
   return (
     <BaseNode accent={TEAL} label="Join">
       <div style={{ fontSize: 10, color: "#888" }}>Wait for parallel branches</div>
     </BaseNode>
   );
 }
+JoinNode.displayName = "JoinNode";
 
 // ── Limit nodes ────────────────────────────────────────────────────────────────
 function LimitNode({ label, fieldKey, placeholder, data }: { label: string; fieldKey: string; placeholder: string; data: NodeProps["data"] }) {
@@ -293,12 +302,21 @@ function LimitNode({ label, fieldKey, placeholder, data }: { label: string; fiel
   );
 }
 
-function MaxRunTimeNode({ data }: NodeProps) { return <LimitNode label="Max Run Time" fieldKey="maxRunTime" placeholder="60 (sec)" data={data} />; }
-function MaxLogSizeNode({ data }: NodeProps) { return <LimitNode label="Max Log Size" fieldKey="maxLogSize" placeholder="1024 (KB)" data={data} />; }
-function MaxMemoryNode({ data }: NodeProps) { return <LimitNode label="Max Memory" fieldKey="maxMemory" placeholder="512 (MB)" data={data} />; }
-function MaxCpuNode({ data }: NodeProps) { return <LimitNode label="Max CPU" fieldKey="maxCpu" placeholder="80 (%)" data={data} />; }
+export function MaxRunTimeNode({ data }: NodeProps) { return <LimitNode label="Max Run Time" fieldKey="maxRunTime" placeholder="60 (sec)" data={data} />; }
+MaxRunTimeNode.displayName = "MaxRunTimeNode";
 
-// ── Exports ────────────────────────────────────────────────────────────────────
+export function MaxLogSizeNode({ data }: NodeProps) { return <LimitNode label="Max Log Size" fieldKey="maxLogSize" placeholder="1024 (KB)" data={data} />; }
+MaxLogSizeNode.displayName = "MaxLogSizeNode";
+
+export function MaxMemoryNode({ data }: NodeProps) { return <LimitNode label="Max Memory" fieldKey="maxMemory" placeholder="512 (MB)" data={data} />; }
+MaxMemoryNode.displayName = "MaxMemoryNode";
+
+export function MaxCpuNode({ data }: NodeProps) { return <LimitNode label="Max CPU" fieldKey="maxCpu" placeholder="80 (%)" data={data} />; }
+MaxCpuNode.displayName = "MaxCpuNode";
+
+// ── NODE_TYPES for consumers ───────────────────────────────────────────────────
+// Exported as a plain object (not a component) — importers should use node-config.ts
+// for NODE_PALETTE and EDGE_TYPE_OPTIONS.
 export const NODE_TYPES = {
   schedule: ScheduleNode,
   onDemand: OnDemandNode,
@@ -317,36 +335,3 @@ export const NODE_TYPES = {
   maxCpu: MaxCpuNode,
   groupContainer: GroupContainerNode,
 } as const;
-
-export const NODE_PALETTE = [
-  { group: "Triggers", items: [
-    { type: "schedule", label: "Schedule", accent: BLUE },
-    { type: "onDemand", label: "On Demand", accent: GREEN },
-    { type: "watchFile", label: "Watch File", accent: AMBER },
-  ] },
-  { group: "Actions", items: [
-    { type: "shellScript", label: "Shell Script", accent: TEAL },
-    { type: "httpRequest", label: "HTTP Request", accent: BLUE },
-    { type: "sendEmail", label: "Send Email", accent: GREEN },
-    { type: "webhook", label: "Webhook", accent: PURPLE },
-    { type: "createTicket", label: "Create Ticket", accent: RED },
-  ] },
-  { group: "Flow Control", items: [
-    { type: "split", label: "Split", accent: ORANGE },
-    { type: "multiplex", label: "Multiplex", accent: PURPLE },
-    { type: "join", label: "Join", accent: TEAL },
-  ] },
-  { group: "Limits", items: [
-    { type: "maxRunTime", label: "Max Run Time", accent: GREY },
-    { type: "maxLogSize", label: "Max Log Size", accent: GREY },
-    { type: "maxMemory", label: "Max Memory", accent: GREY },
-    { type: "maxCpu", label: "Max CPU", accent: GREY },
-  ] },
-];
-
-export const EDGE_TYPE_OPTIONS = [
-  { value: "success", label: "On Success", stroke: GREEN },
-  { value: "error", label: "On Error", stroke: RED },
-  { value: "continue", label: "On Continue", stroke: TEAL },
-  { value: "critical", label: "On Critical", stroke: ORANGE },
-] as const;

@@ -12,5 +12,11 @@
       "binding": "BLOB_BUCKET",
       "bucket_name": "ops-app-data"
     }
-  ]
+  ],
+  "vars": {
+    // CF Tunnel URL for stats-server — reachable from CF Workers edge
+    // localhost:9003 does not exist at the edge; use the public tunnel URL
+    "PM2_STATS_URL": "https://stats.frxncois.com"
+    // STATS_SECRET must be set via `wrangler secret put STATS_SECRET`
+  }
 }

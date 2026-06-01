@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
 
+// PM2_STATS_URL must be the CF Tunnel URL (https://stats.frxncois.com) so it is
+// reachable from the CF Workers edge.  localhost:9003 does not exist there.
+const STATS_SERVER_URL =
+  process.env.PM2_STATS_URL ?? "https://stats.frxncois.com";
 
 export async function GET() {
-  const services = [
+  const services: Array<{ name: string; url: string | null }> = [
     { name: "ops-app", url: null },
+    { name: "stats-server", url: `${STATS_SERVER_URL}/health` },
   ];
 
   const serviceResults = await Promise.all(

@@ -41,3 +41,5 @@ next-env.d.ts
 
 # runs
 _runs/
+_archive/
+env.txt

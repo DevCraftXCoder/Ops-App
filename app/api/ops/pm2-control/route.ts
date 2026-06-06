@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   }
 
   const pm2Url = process.env.PM2_STATS_URL;
-  const secret = process.env.STATS_SECRET ?? "";
+  const secret = process.env.CONTROL_SECRET || process.env.STATS_SECRET || "";
 
   if (!pm2Url) {
     return NextResponse.json({ error: "PM2_STATS_URL not configured" }, { status: 500 });

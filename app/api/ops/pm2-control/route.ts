@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth-token";
 
-
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 async function isAuthed(): Promise<boolean> {
@@ -47,6 +46,9 @@ export async function POST(req: NextRequest) {
   if (!name || typeof name !== "string" || !name.trim()) {
     return NextResponse.json({ error: "missing_name" }, { status: 400 });
   }
+  if (!/^[a-z0-9_.:\- ]+$/i.test(name)) {
+    return NextResponse.json({ error: "invalid_name_chars" }, { status: 400 });
+  }
 
   try {
     const upstream = await fetch(`${pm2Url}/api/pm2/control`, {
@@ -59,8 +61,12 @@ export async function POST(req: NextRequest) {
       signal: AbortSignal.timeout(12000), // pm2 start can be slow
     });
 
-    const data = await upstream.json();
-    return NextResponse.json(data, { status: upstream.status });
+    const data = await upstream.json() as Record<string, unknown>;
+    if (upstream.ok) {
+      return NextResponse.json({ ok: true });
+    }
+    // Expose error code only — strip any internal message fields
+    return NextResponse.json({ error: typeof data.error === "string" ? data.error : "upstream_error" }, { status: upstream.status });
   } catch (err) {
     console.error(JSON.stringify({ level: "error", message: "pm2-control upstream error", detail: err instanceof Error ? err.message : String(err), timestamp: new Date().toISOString() }));
     return NextResponse.json({ error: "upstream_error" }, { status: 502 });

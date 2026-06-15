@@ -23,10 +23,13 @@ export async function POST(req: NextRequest) {
   }
 
   const pm2Url = process.env.PM2_STATS_URL;
-  const secret = process.env.CONTROL_SECRET || process.env.STATS_SECRET || "";
+  const secret = process.env.CONTROL_SECRET || process.env.STATS_SECRET;
 
   if (!pm2Url) {
     return NextResponse.json({ error: "PM2_STATS_URL not configured" }, { status: 500 });
+  }
+  if (!secret) {
+    return NextResponse.json({ error: "CONTROL_SECRET or STATS_SECRET not configured" }, { status: 500 });
   }
 
   let body: { action?: string; name?: string };
@@ -59,7 +62,7 @@ export async function POST(req: NextRequest) {
     const data = await upstream.json();
     return NextResponse.json(data, { status: upstream.status });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "upstream_error";
-    return NextResponse.json({ error: "upstream_error", message }, { status: 502 });
+    console.error(JSON.stringify({ level: "error", message: "pm2-control upstream error", detail: err instanceof Error ? err.message : String(err), timestamp: new Date().toISOString() }));
+    return NextResponse.json({ error: "upstream_error" }, { status: 502 });
   }
 }
